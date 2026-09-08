@@ -1,0 +1,68 @@
+{
+    "geode": "5.10.1",
+    "gd": {
+        "win": "2.2081",
+        "mac": "2.2081",
+        "android": "2.2081",
+        "ios": "2.2081"
+    },
+    "id": "sigmaslicer.click-between-hertz",
+    "name": "Click Between Hertz",
+    "version": "v1.0.0",
+    "developer": "nmart",
+    "description": "Reworks input handling for subtick precision and hertz locking.",
+    "tags": [
+        "gameplay",
+        "enhancement",
+        "performance",
+        "cheat"
+    ],
+    "links": {
+        "source": "https://github.com/sigmaslicer-pog/cbh"
+    },
+    "settings": {
+        "soft-toggle": {
+            "name": "Disable Mod",
+            "type": "bool",
+            "default": false
+        },
+        "precision-fix": {
+            "name": "Precision Fix",
+            "description": "Fixes frame timing desync over time.",
+            "type": "bool",
+            "default": true,
+            "platforms": ["win"]
+        },
+        "physics-bypass": {
+            "name": "Physics Bypass",
+            "description": "Bypasses standard physics limitations for higher hertz configurations.",
+            "type": "bool",
+            "default": false,
+            "platforms": ["win"]
+        },
+        "bypass-mode": {
+            "name": "Bypass Mode",
+            "type": "string",
+            "default": "2.2",
+            "options": ["2.2", "2.1"]
+        },
+        "safe-mode": {
+            "name": "Safe Mode",
+            "description": "Disables progress saving and leaderboards when using physics bypass.",
+            "type": "bool",
+            "default": true
+        },
+        "click-on-steps": {
+            "name": "Click on Steps",
+            "type": "bool",
+            "default": false
+        },
+        "mouse-fix": {
+            "name": "Mouse Fix",
+            "description": "Reduces lag with high polling rate mice.",
+            "type": "bool",
+            "default": false,
+            "platforms": ["win"]
+        }
+    }
+}
