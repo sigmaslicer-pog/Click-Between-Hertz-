@@ -12,7 +12,7 @@ class $modify(SIPlayerObject, PlayerObject) {
         bool m_didWaveSplit = false;
     };
 
-    void player_0(float dt) {
+    void update(float dt) {
         auto fields = m_fields.self();
 
         if (fields->m_yVelAdjustment != 0.0) {
@@ -22,16 +22,14 @@ class $modify(SIPlayerObject, PlayerObject) {
 
         fields->m_preTickPosition = this->getPosition();
 
-        // Process any queued sub-tick inputs from InputQueue
-        auto& queuedInputs = InputQueue::get().getInputs();
-        if (this->m_isDart && !queuedInputs.empty()) {
-            for (const auto& input : queuedInputs) {
-                if (input.m_isPlayer1 == (this == PlayLayer::get()->m_player1)) {
-                    // Handle button state for click between hertz
-                    this->pushButton(input.m_button);
+        auto& inputs = InputQueue::instance().queue;
+        if (this->m_isDart && !inputs.empty()) {
+            for (const auto& input : inputs) {
+                if (input.player1 == (this == PlayLayer::get()->m_player1)) {
+                    this->pushButton(input.button);
                 }
             }
-            InputQueue::get().clear();
+            InputQueue::instance().clear();
             fields->m_didWaveSplit = true;
         } else {
             fields->m_didWaveSplit = false;
@@ -44,6 +42,6 @@ class $modify(SIPlayerObject, PlayerObject) {
             fields->m_yDispAdjustment = 0.0;
         }
 
-        PlayerObject::player_0(dt);
+        PlayerObject::update(dt);
     }
 };

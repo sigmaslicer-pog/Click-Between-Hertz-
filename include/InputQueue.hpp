@@ -1,32 +1,26 @@
 #pragma once
 #include <vector>
 
-struct QueuedInput {
-    bool m_down;
-    int m_button;
-    bool m_isPlayer1;
-    double m_ratio;
+struct SimpleInput {
+    bool down;
+    int button;
+    bool player1;
 };
 
 class InputQueue {
-private:
-    std::vector<QueuedInput> m_inputs;
-
 public:
-    static InputQueue& get() {
-        static InputQueue instance;
-        return instance;
+    static InputQueue& instance() {
+        static InputQueue inst;
+        return inst;
     }
 
-    void push(bool down, int button, bool isPlayer1, double ratio = 1.0) {
-        m_inputs.push_back({down, button, isPlayer1, ratio});
-    }
+    std::vector<SimpleInput> queue;
 
-    std::vector<QueuedInput>& getInputs() {
-        return m_inputs;
+    void add(bool down, int button, bool player1) {
+        queue.push_back({down, button, player1});
     }
 
     void clear() {
-        m_inputs.clear();
+        queue.clear();
     }
 };
