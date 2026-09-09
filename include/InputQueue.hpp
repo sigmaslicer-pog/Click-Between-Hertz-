@@ -1,26 +1,23 @@
 #pragma once
-#include <vector>
 
-struct SimpleInput {
-    bool down;
-    int button;
-    bool player1;
-};
+#include <Geode/loader/Dispatch.hpp>
 
-class InputQueue {
-public:
-    static InputQueue& instance() {
-        static InputQueue inst;
-        return inst;
-    }
+#undef MY_MOD_ID
 
-    std::vector<SimpleInput> queue;
+#define MY_MOD_ID "chizz.superb-input-precision"
 
-    void add(bool down, int button, bool player1) {
-        queue.push_back({down, button, player1});
-    }
+namespace subtickinputs {
 
-    void clear() {
-        queue.clear();
-    }
-};
+	struct PlayerButtonCommandWithRatio {
+		PlayerButtonCommand input;
+		double ratio;
+	};
+
+	inline geode::Result<void> setInputQueueWithRatios(
+		std::vector<PlayerButtonCommandWithRatio> inputQueue, float dt)
+		GEODE_EVENT_EXPORT(&setInputQueueWithRatios,
+			(std::vector<PlayerButtonCommandWithRatio> inputQueue, float dt));
+
+	inline geode::Result<std::vector<PlayerButtonCommandWithRatio>> getInputQueueWithRatios(
+		float dt) GEODE_EVENT_EXPORT(&getInputQueueWithRatios, (float dt));
+} // namespace subtickinputs

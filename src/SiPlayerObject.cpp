@@ -1,6 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayerObject.hpp>
-#include "InputQueue.hpp"
+#include "CBHQueue.hpp"
 
 using namespace geode::prelude;
 
@@ -22,14 +22,14 @@ class $modify(SIPlayerObject, PlayerObject) {
 
         fields->m_preTickPosition = this->getPosition();
 
-        auto& inputs = InputQueue::instance().queue;
+        auto& inputs = CBHQueue::get().m_list;
         if (this->m_isDart && !inputs.empty()) {
             for (const auto& input : inputs) {
                 if (input.player1 == (this == PlayLayer::get()->m_player1)) {
                     this->pushButton(input.button);
                 }
             }
-            InputQueue::instance().clear();
+            CBHQueue::get().clear();
             fields->m_didWaveSplit = true;
         } else {
             fields->m_didWaveSplit = false;
