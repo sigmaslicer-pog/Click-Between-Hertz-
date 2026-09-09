@@ -106,7 +106,7 @@ class $modify(MyMenuLayer, MenuLayer) {
 #include <cmath>
 #include <cstddef>
 
-#include "InputQueue.hpp"
+#include "CBHQueue.hpp"
 #include "SIPlayerObject.hpp"
 #include "SubtickInputs.hpp"
 
