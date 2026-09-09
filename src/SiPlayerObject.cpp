@@ -1,20 +1,14 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayerObject.hpp>
+#include "InputQueue.hpp"
 
 using namespace geode::prelude;
-
-struct WaveInput {
-    double m_ratio;
-    int m_button;
-    bool m_isPush;
-};
 
 class $modify(SIPlayerObject, PlayerObject) {
     struct Fields {
         double m_yVelAdjustment = 0.0;
         double m_yDispAdjustment = 0.0;
         CCPoint m_preTickPosition;
-        std::vector<WaveInput> m_pendingWaveInputs;
         bool m_didWaveSplit = false;
     };
 
@@ -28,14 +22,16 @@ class $modify(SIPlayerObject, PlayerObject) {
 
         fields->m_preTickPosition = this->getPosition();
 
-        // Handle sub-tick wave / click inputs if any are queued
-        if (this->m_isDart && !fields->m_pendingWaveInputs.empty()) {
-            for (const auto& waveInput : fields->m_pendingWaveInputs) {
-                // Apply sub-tick button push/release state based on the ratio
-                this->pushButton(waveInput.m_button);
-                // Add your custom delta time or sub-tick progression here
+        // Process any queued sub-tick inputs from InputQueue
+        auto& queuedInputs = InputQueue::get().getInputs();
+        if (this->m_isDart && !queuedInputs.empty()) {
+            for (const auto& input : queuedInputs) {
+                if (input.m_isPlayer1 == (this == PlayLayer::get()->m_player1)) {
+                    // Handle button state for click between hertz
+                    this->pushButton(input.m_button);
+                }
             }
-            fields->m_pendingWaveInputs.clear();
+            InputQueue::get().clear();
             fields->m_didWaveSplit = true;
         } else {
             fields->m_didWaveSplit = false;
