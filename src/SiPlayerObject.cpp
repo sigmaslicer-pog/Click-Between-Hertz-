@@ -1,6 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayerObject.hpp>
-#include "../CBHQueue.hpp"
+#include "CBHQueue.hpp"
 
 using namespace geode::prelude;
 
