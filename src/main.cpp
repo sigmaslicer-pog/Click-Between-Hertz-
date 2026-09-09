@@ -208,7 +208,7 @@ static void processInputs(float dt) {
         if (player && player->m_isDart && !player->m_isDashing) {
             GET_PLAYER_FIELD(player, m_pendingWaveInputs)
                 .push_back({
-                    ratio,
+                    static_cast<float>(ratio),
                     input.m_isPush,
                     static_cast<int>(input.m_button),
                 });
@@ -299,7 +299,7 @@ namespace subtickinputs {
                 }
             }
 
-            result.push_back({input, ratio});
+            result.push_back({input, static_cast<float>(ratio)});
         }
 
         return Ok(std::move(result));
