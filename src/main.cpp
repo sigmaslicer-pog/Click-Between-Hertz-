@@ -106,6 +106,8 @@ class $modify(MyMenuLayer, MenuLayer) {
 #include <cmath>
 #include <cstddef>
 
+
+#include "windows.hpp"
 #include "main1.cpp"
 #include "timestamp.hpp"
 #include "includes.hpp"
