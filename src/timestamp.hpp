@@ -6,6 +6,8 @@ using TimestampType = double;
 
 #ifdef GEODE_IS_WINDOWS
 
+#include "windows.hpp"
+
 inline TimestampType getCurrentTimestamp() {
 	LARGE_INTEGER t;
 	if (linuxNative) {
