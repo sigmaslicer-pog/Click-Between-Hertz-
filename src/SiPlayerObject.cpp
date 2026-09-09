@@ -1,6 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayerObject.hpp>
-#include "CBHQueue.hpp"
+#include "../CBHQueue.hpp"
 
 using namespace geode::prelude;
 
@@ -26,7 +26,7 @@ class $modify(SIPlayerObject, PlayerObject) {
         if (this->m_isDart && !inputs.empty()) {
             for (const auto& input : inputs) {
                 if (input.player1 == (this == PlayLayer::get()->m_player1)) {
-                    this->pushButton(input.button);
+                    this->pushButton(static_cast<PlayerButton>(input.button));
                 }
             }
             CBHQueue::get().clear();
