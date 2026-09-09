@@ -106,11 +106,9 @@ class $modify(MyMenuLayer, MenuLayer) {
 #include <cmath>
 #include <cstddef>
 
-#include "linuxeventcodes.hpp"
 #include "main1.cpp"
 #include "timestamp.hpp"
 #include "includes.hpp"
-#include "windows.hpp"
 #include "windows.cpp"
 #include "CBHQueue.hpp"
 #include "SIPlayerObject.hpp"
