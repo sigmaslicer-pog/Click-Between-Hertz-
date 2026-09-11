@@ -35,4 +35,4 @@ extern std::array<std::unordered_set<size_t>, 6> inputBinds;
 extern std::unordered_set<uint16_t> heldInputs;
 
 extern bool enableRightClick;
-extern bool softToggle; // true -> cbf disabled
+extern bool softToggle;
