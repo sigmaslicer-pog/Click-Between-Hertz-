@@ -36,28 +36,24 @@ PlayerButtonCommand nextInput = EMPTY_INPUT;
 TimestampType lastFrameTime;
 TimestampType currentFrameTime;
 
-bool firstFrame = true; // necessary to prevent accidental inputs at the start of the level or when unpausing
-bool skipUpdate = true; // true -> dont split steps during PlayerObject::update()
+bool firstFrame = true;
+bool skipUpdate = true; 
 bool linuxNative = false;
 
 std::array<std::unordered_set<size_t>, 6> inputBinds;
 std::unordered_set<uint16_t> heldInputs;
 
-/*
-this function copies over the input data and uses it to build a queue of physics steps
-based on when each input happened relative to the start of the frame
-(and also calculates the associated stepDelta multipliers for each step)
-*/
+
 void buildStepQueue(int stepCount) {
 	PlayLayer* playLayer = PlayLayer::get();
 	nextInput = EMPTY_INPUT;
-	stepQueue = {}; // shouldnt be necessary, but just in case
+	stepQueue = {}; 
 
 	#ifdef GEODE_IS_WINDOWS
 	if (linuxNative) linuxCheckInputs();
 	#endif
 	
-	// workaround for a bug in geode 5.3.0 that affects android
+	
 	#ifdef GEODE_IS_ANDROID
 	static double androidFactor = []() {
 		VersionInfo ver = geode::Loader::get()->getVersion();
@@ -82,18 +78,18 @@ void buildStepQueue(int stepCount) {
 	TimestampType stepDelta = deltaTime / stepCount;
 
 	int inputIdx = 0;
-	for (int i = 0; i < stepCount; i++) { // for each physics step of the frame
+	for (int i = 0; i < stepCount; i++) { 
 		double elapsedTime = 0.0;
-		while (inputIdx < inputVector.size()) { // while loop to account for multiple inputs on the same step
+		while (inputIdx < inputVector.size()) { 
 			PlayerButtonCommand input = inputVector[inputIdx];
 			GEODE_ANDROID(input.m_timestamp /= androidFactor;)
 
-			if (input.m_timestamp - lastFrameTime < stepDelta * (i + 1)) { // if the next input in the vector happened on the current step, or if its the last step
-				double inputTime = fmod((input.m_timestamp - lastFrameTime), stepDelta) / stepDelta; // proportion of step elapsed at the time the input was made
+			if (input.m_timestamp - lastFrameTime < stepDelta * (i + 1)) { 
+				double inputTime = fmod((input.m_timestamp - lastFrameTime), stepDelta) / stepDelta; 
 				stepQueue.emplace_back(Step{ input, std::clamp(inputTime - elapsedTime, SMALLEST_FLOAT, 1.0), false });
 				elapsedTime = inputTime;
 				inputIdx++;
-				//log::info("i{} l{} c{} {}", input.m_timestamp, lastFrameTime, currentFrameTime, input.m_timestamp < lastFrameTime || input.m_timestamp > currentFrameTime);
+				
 			}
 			else break; 
 		}
@@ -102,13 +98,10 @@ void buildStepQueue(int stepCount) {
 	}
 
 	lastFrameTime = currentFrameTime;
-	inputVector.erase(inputVector.begin(), inputVector.begin() + inputIdx); // keep inputs with timestamps later than currentFrameTime
+	inputVector.erase(inputVector.begin(), inputVector.begin() + inputIdx); 
 }
 
-/*
-return the first step in the queue,
-also check if an input happened on the previous step, if so run handleButton.
-*/
+
 Step popStepQueue() {
 	if (stepQueue.empty()) return EMPTY_STEP;
 
@@ -127,9 +120,7 @@ Step popStepQueue() {
 }
 
 #ifdef GEODE_IS_WINDOWS
-/*
-prepare list of keybinds for linux
-*/
+
 void updateKeybinds() {
 	std::array<std::unordered_set<size_t>, 6> binds;
 	std::vector<geode::Keybind> v;
@@ -173,9 +164,7 @@ void updateKeybinds() {
 }
 #endif
 
-/*
-rewritten PlayerObject::resetCollisionLog() since it's inlined in GD 2.2074 on Windows
-*/
+
 void decomp_resetCollisionLog(PlayerObject* p) {
 	p->m_collisionLogTop->removeAllObjects();
     p->m_collisionLogBottom->removeAllObjects();
@@ -192,32 +181,29 @@ double averageDelta = 0.0;
 bool physicsBypass;
 bool legacyBypass;
 
-/*
-determine the number of physics steps that happen on each frame,
-need to rewrite the vanilla formula bc otherwise you'd have to use inline assembly to get the step count
-*/
+
 int calculateStepCount(double delta, float timewarp, bool forceVanilla) {
-	if (!physicsBypass || forceVanilla) { // vanilla 2.2
-		return std::round(std::max(1.0, ((delta * 60.0) / std::min(1.0f, timewarp)) * 4.0)); // not sure if this is different from `(delta * 240) / timewarp` bc of float precision
+	if (!physicsBypass || forceVanilla) { 
+		return std::round(std::max(1.0, ((delta * 60.0) / std::min(1.0f, timewarp)) * 4.0)); 
 	}
-	else if (legacyBypass) { // 2.1 physics bypass (same as vanilla 2.1)
+	else if (legacyBypass) { 
 		return std::round(std::max(4.0, delta * 240.0) / std::min(1.0f, timewarp));
 	}
-	else { // sorta just 2.2 + physics bypass but it doesnt allow below 240 steps/sec, also it smooths things out a bit when lagging
+	else { 
 		double animationInterval = CCDirector::sharedDirector()->getAnimationInterval();
-		averageDelta = (0.05 * delta) + (0.95 * averageDelta); // exponential moving average to detect lag/external fps caps
-		if (averageDelta > animationInterval * 10) averageDelta = animationInterval * 10; // dont let averageDelta get too high
+		averageDelta = (0.05 * delta) + (0.95 * averageDelta); 
+		if (averageDelta > animationInterval * 10) averageDelta = animationInterval * 10; 
 
-		bool laggingOneFrame = animationInterval < delta - (1.0 / 240.0); // more than 1 step of lag on a single frame
-		bool laggingManyFrames = averageDelta - animationInterval > 0.0005; // average lag is >0.5ms
+		bool laggingOneFrame = animationInterval < delta - (1.0 / 240.0); 
+		bool laggingManyFrames = averageDelta - animationInterval > 0.0005; 
 
-		if (!laggingOneFrame && !laggingManyFrames) { // no stepcount variance when not lagging
+		if (!laggingOneFrame && !laggingManyFrames) { 
 			return std::round(std::ceil((animationInterval * 240.0) - 0.0001) / std::min(1.0f, timewarp));
 		}
-		else if (!laggingOneFrame) { // consistently low fps
+		else if (!laggingOneFrame) { 
 			return std::round(std::ceil(averageDelta * 240.0) / std::min(1.0f, timewarp));
 		}
-		else { // need to catch up badly
+		else { 
 			return std::round(std::ceil(delta * 240.0) / std::min(1.0f, timewarp));
 		}
 	}
@@ -228,7 +214,7 @@ bool safeMode;
 class $modify(PlayLayer) {
 	bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
 		#ifdef GEODE_IS_WINDOWS
-		if (linuxNative) updateKeybinds(); // update keybinds when you enter a level (for linux)
+		if (linuxNative) updateKeybinds(); 
 		#endif
 		bool result = PlayLayer::init(level, useReplay, dontCreateObjects);
 		if (!softToggle) {
@@ -238,7 +224,7 @@ class $modify(PlayLayer) {
 		return result;
 	}
 
-	// disable progress in safe mode
+	
 	void levelComplete() {
 		bool testMode = this->m_isTestMode;
 		if (safeMode && !softToggle) this->m_isTestMode = true;
@@ -248,7 +234,7 @@ class $modify(PlayLayer) {
 		this->m_isTestMode = testMode;
 	}
 
-	// disable new best popup in safe mode
+	
 	void showNewBest(bool p0, int p1, int p2, bool p3, bool p4, bool p5) {
 		if (!safeMode || softToggle) PlayLayer::showNewBest(p0, p1, p2, p3, p4, p5);
 	}
@@ -263,14 +249,14 @@ void onFrameStart() {
 
 	if (!precisionFix || linuxNative) currentFrameTime = getCurrentTimestamp();
 
-	if (softToggle // CBF disabled
+	if (softToggle 
 	#ifdef GEODE_IS_WINDOWS
-		|| !GetFocus() // GD is minimized
+		|| !GetFocus() 
 	#endif
-		|| !playLayer // not in level
-		|| !(par = playLayer->getParent()) // must be a real playLayer with a parent (for compatibility with mods that use a fake playLayer)
-		|| (par->getChildByType<PauseLayer>(0)) // if paused
-		|| (playLayer->getChildByType<EndLevelLayer>(0))) // if on endscreen
+		|| !playLayer 
+		|| !(par = playLayer->getParent()) 
+		|| (par->getChildByType<PauseLayer>(0)) 
+		|| (playLayer->getChildByType<EndLevelLayer>(0))) 
 	{
 		firstFrame = true;
 		skipUpdate = true;
@@ -279,12 +265,12 @@ void onFrameStart() {
 	
 	#ifdef GEODE_IS_WINDOWS
 	if (linuxNative) linuxHeartbeat();
-	if (mouseFix && !skipUpdate) { // reduce lag with high polling rate mice by limiting the number of mouse movements per frame to 1
+	if (mouseFix && !skipUpdate) { 
 		MSG msg;
 		int index = 1;
-		while (PeekMessage(&msg, NULL, WM_MOUSEFIRST + index, WM_MOUSELAST, PM_NOREMOVE)) { // check for mouse inputs in the queue
+		while (PeekMessage(&msg, NULL, WM_MOUSEFIRST + index, WM_MOUSELAST, PM_NOREMOVE)) { 
 			if (msg.message == WM_MOUSEMOVE || msg.message == WM_NCMOUSEMOVE) {
-				PeekMessage(&msg, NULL, WM_MOUSEFIRST + index, WM_MOUSELAST, PM_REMOVE); // remove mouse movements from queue
+				PeekMessage(&msg, NULL, WM_MOUSEFIRST + index, WM_MOUSELAST, PM_REMOVE); 
 			}
 			else index++;
 		}
@@ -327,7 +313,7 @@ class $modify(GJBaseGameLayer) {
 		(void) self.setHookPriority("GJBaseGameLayer::getModifiedDelta", Priority::VeryEarly);
 	}
 
-	// either use the modified delta to calculate the step count, or use the actual delta if physics bypass is enabled
+	
 	double calculateSteps(float modifiedDelta) {
 		PlayLayer* pl = PlayLayer::get();
 		if (pl) {
@@ -346,7 +332,7 @@ class $modify(GJBaseGameLayer) {
 			else if (modifiedDelta > 0.0) buildStepQueue(stepCount);
 			else skipUpdate = true;
 		}
-		else if (physicsBypass) stepCount = calculateStepCount(modifiedDelta, this->m_gameState.m_timeWarp, true); // disable physics bypass outside levels
+		else if (physicsBypass) stepCount = calculateStepCount(modifiedDelta, this->m_gameState.m_timeWarp, true); 
 
 		return modifiedDelta;
 	}
@@ -354,7 +340,7 @@ class $modify(GJBaseGameLayer) {
 	void processCommands(float p0, bool p1, bool p2) {
 		if (clickOnSteps && !stepQueue.empty()) {
 			Step step;
-			do step = popStepQueue(); while (!stepQueue.empty() && !step.endStep); // process 1 step (or more if theres an input)
+			do step = popStepQueue(); while (!stepQueue.empty() && !step.endStep); 
 		}
 		GJBaseGameLayer::processCommands(p0, p1 ,p2);
 	}
@@ -364,7 +350,7 @@ class $modify(GJBaseGameLayer) {
 	}
 
 #ifdef GEODE_IS_MACOS
-	// getModifiedDelta is inlined, hook update directly instead
+	
 	void update(float delta) {
 		if (this->m_started) {
 			float timewarp = std::max(this->m_gameState.m_timeWarp, 1.0f) / 240.0f;
@@ -387,11 +373,11 @@ bool p2Split = false;
 bool midStep = false;
 
 class $modify(PlayerObject) {
-	// split a single step based on the entries in stepQueue
+	
 	void update(float stepDelta) {
 		PlayLayer* pl = PlayLayer::get();
 		
-		if (pl && this != pl->m_player1 || midStep) { // do all of the logic during the P1 update for simplicity
+		if (pl && this != pl->m_player1 || midStep) { 
 			if (midStep || !inputThisStep || this != pl->m_player2) PlayerObject::update(stepDelta);
 			return; 
 		}
@@ -426,7 +412,7 @@ class $modify(PlayerObject) {
 			|| p2->m_isDashing
 			|| (p2->m_isDart || p2->m_isBird || p2->m_isShip || p2->m_isSwing);
 
-		p1Pos = PlayerObject::getPosition(); // save for later to prevent desync with move triggers & some other issues
+		p1Pos = PlayerObject::getPosition(); 
 		p2Pos = p2->getPosition();
 
 		p1Split = p1NotBuffering;
@@ -444,14 +430,14 @@ class $modify(PlayerObject) {
 			if (p1Split) {
 				PlayerObject::update(substepDelta);
 				if (!step.endStep) {
-					if (firstLoop && ((this->m_yVelocity < 0) ^ this->m_isUpsideDown)) this->m_isOnGround = p1StartedOnGround; // this fixes delayed inputs on platforms moving down for some reason
-					if (!this->m_isOnSlope || this->m_isDart) pl->checkCollisions(this, 0.0f, true); // moving platforms will launch u really high if this is anything other than 0.0, idk why
-					else pl->checkCollisions(this, stepDelta, true); // slopes will launch you really high if the 2nd argument is lower than like 0.01, idk why
+					if (firstLoop && ((this->m_yVelocity < 0) ^ this->m_isUpsideDown)) this->m_isOnGround = p1StartedOnGround; 
+					if (!this->m_isOnSlope || this->m_isDart) pl->checkCollisions(this, 0.0f, true); 
+					else pl->checkCollisions(this, stepDelta, true); 
 					PlayerObject::updateRotation(substepDelta);
-					decomp_resetCollisionLog(this); // necessary for wave
+					decomp_resetCollisionLog(this); 
 				}
 			}
-			else if (step.endStep) PlayerObject::update(stepDelta); // revert to click-on-steps mode when buffering to reduce bugs
+			else if (step.endStep) PlayerObject::update(stepDelta); 
 
 			if (p2Split) {
 				p2->update(substepDelta);
@@ -471,13 +457,13 @@ class $modify(PlayerObject) {
 		midStep = false;
 	}
 
-	// this function was chosen to update m_lastPosition in just because it's called right at the end of the vanilla physics step loop
+	
 	void updateRotation(float t) {
 		PlayLayer* pl = PlayLayer::get();
 		
 		if (pl && this == pl->m_player1 && p1Split && !midStep) {
-			PlayerObject::updateRotation(rotationDelta); // perform the remaining rotation that was left incomplete in the PlayerObject::update() hook
-			this->m_lastPosition = p1Pos; // move triggers & spider get confused without this (iirc)
+			PlayerObject::updateRotation(rotationDelta); 
+			this->m_lastPosition = p1Pos; 
 		}
 		else if (pl && this == pl->m_player2 && p2Split && !midStep) {
 			PlayerObject::updateRotation(rotationDelta);
@@ -485,7 +471,7 @@ class $modify(PlayerObject) {
 		}
 		else PlayerObject::updateRotation(t);
 
-		if (physicsBypass && pl && !midStep) { // fix percent calculation with physics bypass on 2.2 levels
+		if (physicsBypass && pl && !midStep) { 
 			pl->m_gameState.m_currentProgress = static_cast<int>(pl->m_gameState.m_levelTime * 240.0);
 		}
 	}
@@ -496,7 +482,7 @@ class $modify(PlayerObject) {
 
 		if (pl && (this == pl->m_player1 || this == pl->m_player2) && (physicsBypass || inputThisStep)) {
 			shipRotDelta = t;
-			PlayerObject::updateShipRotation(1.0/1024); // necessary to use a really small deltatime to get around an oversight in rob's math
+			PlayerObject::updateShipRotation(1.0/1024); 
 			shipRotDelta = 0.0f;
 		}
 		else PlayerObject::updateShipRotation(t);
@@ -504,9 +490,7 @@ class $modify(PlayerObject) {
 	#endif
 };
 
-/*
-CBF/PB endscreen watermark
-*/
+
 class $modify(EndLevelLayer) {
 	void customSetup() {
 		EndLevelLayer::customSetup();
@@ -532,9 +516,7 @@ class $modify(EndLevelLayer) {
 	}
 };
 
-/*
-dont submit to leaderboards for rated levels
-*/
+
 class $modify(GJGameLevel) {
 	void savePercentage(int percent, bool p1, int clicks, int attempts, bool valid) {
 		valid = (
@@ -549,8 +531,8 @@ class $modify(GJGameLevel) {
 
 float Slerp2D(float p0, float p1, float p2) {
 	auto orig = reinterpret_cast<float (*)(float, float, float)>(geode::base::get() + 0x71ef0);
-	if (shipRotDelta != 0.0f) { // only do anything if Slerp2D is called within PlayerObject::updateShipRotation()
-		shipRotDelta *= p2 * 1024; // p2 is 1/1024 scaled by a constant factor, we need to multiply shipRotDelta by that factor
+	if (shipRotDelta != 0.0f) { 
+		shipRotDelta *= p2 * 1024; 
 		return orig(p0, p1, shipRotDelta);
 	}
 	else return orig(p0, p1, p2);
@@ -574,39 +556,39 @@ void togglePrecisionFix(bool enable) {
 		void* retAddr = reinterpret_cast<void*>(base + 0x73703);
 		void* currentTimeAddr = reinterpret_cast<void*>(base + 0x1a84d8);
 
-		// prevent frame timing from desyncing over time in ccapplication::run
+		
 		geode::ByteVector cave = {
-			0x9C,                                     // pushfq
-			0x0F, 0x57, 0xC0,                         // xorps xmm0, xmm0
-			0x0F, 0x57, 0xC9,                         // xorps xmm1, xmm1
+			0x9C,                                     
+			0x0F, 0x57, 0xC0,                        
+			0x0F, 0x57, 0xC9,                        
 
-			// grid snap currentTime based on the float version of animation interval
-			0x48, 0x83, 0xC0, 0x0a,                   // add rax,10                               this fixes rounding errors, dont question it
-			0x0F, 0x5A, 0xC7,                         // cvtps2pd xmm0,xmm7
-			0x49, 0xB9, 0,0,0,0,0,0,0,0,              // movabs r9, &freq
-			0xF2, 0x49, 0x0F, 0x2A, 0x09,             // cvtsi2sd xmm1,qword ptr [r9]
-			0xF2, 0x0F, 0x59, 0xC1,                   // mulsd  xmm0,xmm1
-			0xF2, 0x48, 0x0F, 0x2A, 0xC8,             // cvtsi2sd xmm1,rax
-			0xF2, 0x0F, 0x5E, 0xC8,                   // divsd  xmm1,xmm0
-			0xF2, 0x48, 0x0F, 0x2C, 0xC1,             // cvttsd2si rax,xmm1
-			0xF2, 0x48, 0x0F, 0x2A, 0xC8,             // cvtsi2sd xmm1,rax
-			0xF2, 0x0F, 0x59, 0xC8,                   // mulsd  xmm1,xmm0
-			0xF2, 0x48, 0x0F, 0x2D, 0xC1,             // cvtsd2si rax,xmm1
+			
+			0x48, 0x83, 0xC0, 0x0a,                                                
+			0x0F, 0x5A, 0xC7,                         
+			0x49, 0xB9, 0,0,0,0,0,0,0,0,             
+			0xF2, 0x49, 0x0F, 0x2A, 0x09,            
+			0xF2, 0x0F, 0x59, 0xC1,                   
+			0xF2, 0x48, 0x0F, 0x2A, 0xC8,             
+			0xF2, 0x0F, 0x5E, 0xC8,                   
+			0xF2, 0x48, 0x0F, 0x2C, 0xC1,           
+			0xF2, 0x48, 0x0F, 0x2A, 0xC8,            
+			0xF2, 0x0F, 0x59, 0xC8,                   
+			0xF2, 0x48, 0x0F, 0x2D, 0xC1,             
 
-			// fix precision issue in deltaTime calculation (supplemented by pfPatch2)
-			0x4D, 0x8B, 0x21,                         // mov r12,QWORD PTR [r9]
+			
+			0x4D, 0x8B, 0x21,                       
 
-			// move corrected currentTime value into relevant locations
-			0x9D,                                     // popfq
-			0x48, 0x89, 0x44, 0x24, 0x58,             // mov [rsp+0x58], rax
-			0x48, 0xA3, 0,0,0,0,0,0,0,0,              // mov [currentTimeAddr], rax
+			
+			0x9D,                                     
+			0x48, 0x89, 0x44, 0x24, 0x58,             
+			0x48, 0xA3, 0,0,0,0,0,0,0,0,             
 
-			// restore previous state
-			0x0F, 0x57, 0xC0,                         // xorps xmm0, xmm0
-			0x0F, 0x57, 0xC9,                         // xorps xmm1, xmm1
-			0xF2, 0x48, 0x0F, 0x2A, 0x44, 0x24, 0x68, // cvtsi2sd xmm0, [rsp+0x68]
-			0x49, 0xB9, 0,0,0,0,0,0,0,0,              // movabs r9, retAddr
-			0x41, 0xFF, 0xE1                          // jmp r9
+			
+			0x0F, 0x57, 0xC0,                         
+			0x0F, 0x57, 0xC9,                         
+			0xF2, 0x48, 0x0F, 0x2A, 0x44, 0x24, 0x68, 
+			0x49, 0xB9, 0,0,0,0,0,0,0,0,              
+			0x41, 0xFF, 0xE1                          
 		};
 
 		writeAddr(cave, 16, &freq);
@@ -617,8 +599,8 @@ void togglePrecisionFix(bool enable) {
 		memcpy(caveAddr, cave.data(), cave.size());
 
 		geode::ByteVector entry = {
-			0x49, 0xB9, 0,0,0,0,0,0,0,0,              // mov r9, caveAddr
-			0x41, 0xFF, 0xE1                          // jmp r9
+			0x49, 0xB9, 0,0,0,0,0,0,0,0,              
+			0x41, 0xFF, 0xE1                          
 		};
 		writeAddr(entry, 2, caveAddr);
 
@@ -654,8 +636,8 @@ void togglePhysicsBypass(bool enable) {
 
 	static Patch* pbPatch = nullptr;
 	if (!pbPatch) {
-		// mov rcx, &stepCount
-		// mov r11d, dword ptr [rcx]
+		
+		
 		geode::ByteVector bytes = { 0x48, 0xb9, 0, 0, 0, 0, 0, 0, 0, 0, 0x44, 0x8b, 0x19 };
 		writeAddr(bytes, 2, &stepCount);
 		log::info("Physics bypass patch: {} at {}", bytes, addr);
@@ -689,7 +671,7 @@ void toggleMod(bool disable) {
 
 	softToggle = disable;
 
-	// for mod menus that let you toggle cbf mid-attempt
+	
 	PlayLayer* pl = PlayLayer::get();
 	if (pl) {
 		if (!softToggle) {
