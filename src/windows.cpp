@@ -19,7 +19,7 @@ HANDLE hShmFile = NULL;
 HANDLE hShmMapping = NULL;
 SharedMemory* pSharedMem = nullptr;
 
-// notify the player if theres an issue with input on Linux
+
 #include <Geode/modify/CreatorLayer.hpp>
 class $modify(CreatorLayer) {
 	bool init() {
@@ -215,7 +215,7 @@ void windowsSetup() {
 	HMODULE ntdll = GetModuleHandle("ntdll.dll");
 	typedef void (*wine_get_host_version)(const char **sysname, const char **release);
 	wine_get_host_version wghv = (wine_get_host_version)GetProcAddress(ntdll, "wine_get_host_version");
-	if (wghv) { // if this function exists, the user is on Wine
+	if (wghv) { 
 		const char* sysname;
 		const char* release;
 		wghv(&sysname, &release);
@@ -224,7 +224,7 @@ void windowsSetup() {
 		log::info("Wine {}", sys);
 
 		if (sys == "Linux") Mod::get()->setSavedValue<bool>("you-must-be-on-linux-to-change-this", true);
-		if (sys == "Linux" && Mod::get()->getSettingValue<bool>("wine-workaround")) { // background raw keyboard input doesn't work in Wine
+		if (sys == "Linux" && Mod::get()->getSettingValue<bool>("wine-workaround")) { 
 			linuxNative = true;
 			log::info("Linux native");
 
