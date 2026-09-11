@@ -15,7 +15,7 @@
 using namespace geode::prelude;
 using namespace subtickinputs;
 
-// Define this at the top so the compiler knows it before functions use it
+
 struct PlayerButtonCommandWithRatio {
     PlayerButtonCommand input;
     float ratio;
