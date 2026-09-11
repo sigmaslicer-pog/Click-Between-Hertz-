@@ -15,6 +15,6 @@ namespace subtickinputs {
 		inline bool velocityUnroundingEnabled = false;
 		inline bool modEnabled = false;
 		inline bool debugModeEnabled = false;
-	} // namespace config
+	}
 
-} // namespace subtickinputs
+}
