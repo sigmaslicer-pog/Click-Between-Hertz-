@@ -10,7 +10,7 @@ namespace subtickinputs::fields {
 		bool m_isPush;
 		int m_button;
 	};
-} // namespace subtickinputs::fields
+} 
 
 class $modify(SIPlayerObject, PlayerObject) {
 	struct Fields {
@@ -34,9 +34,9 @@ class $modify(SIPlayerObject, PlayerObject) {
 
 namespace subtickinputs::fields {
 
-	// clang-format off
+	
 	#define GET_PLAYER_FIELD(playerObj, fieldName) \
 	(static_cast<SIPlayerObject*>(playerObj)->m_fields->fieldName)
-	// clang-format on
+	
 
-} // namespace subtickinputs::fields
+}
